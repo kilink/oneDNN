@@ -36,6 +36,7 @@
 ///    for the context vectors in oneDNN yet
 
 #include <assert.h>
+#include <signal.h>
 
 #include <cstring>
 #include <iostream>
@@ -883,6 +884,19 @@ void simple_net() {
     s.wait();
 }
 
+void handler(int sig) {
+  printf("Caught signal");
+}
+
 int main(int argc, char **argv) {
-    return handle_example_errors({engine::kind::cpu}, simple_net);
+  struct sigaction sa;
+  sa.sa_flags = SA_SIGINFO;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_handler = handler;
+  if (sigaction(SIGUSR1, &sa, NULL) == -1) {
+    return -1;
+  }
+  while (true) {
+    handle_example_errors({engine::kind::cpu}, simple_net);
+  }
 }
